@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.staticfile.org/twitter-bootstrap/5.0.2/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.staticfile.org/mqtt/2.18.3/mqtt.min.js"></script>
+    <script src="js/inflate.min.js" type="text/javascript"></script>
+    <style>
+        body {
+            margin: 0; /* 移除默认的边距 */
+            background-image: url("./images/background.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+        }
+        @media (max-width: 768px) {
+            .btn {
+                font-size: smaller; /* 适应手机 */
+            }
+        }
+
+        .page-content {
+            /*隐藏内容*/
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+            /* 显示内容*/
+        }
+
+        #colorSelect {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+<h1 align="center">远程控制</h1>
+<div class="container" id="pageSelect" style="text-align: center">
+    <div class="row" style="margin-bottom: 1rem; justify-content-between;">
+        <div>
+            <button class="btn btn-primary " id="btn-1" data-page="page1" type="button" onclick='pub("1")'>
+                1主页
+            </button>
+            <button class="btn btn-primary " id="btn-2" data-page="page2" type="button" onclick='pub("2")'>
+                2文字显示
+            </button>
+            <button class="btn btn-primary" id="btn-3" data-page="page3" type="button" onclick='pub("3")'>
+                3秒表
+            </button>
+            <button class="btn btn-primary" id="btn-4" data-page="page4" type="button" onclick='pub("4")'>
+                4图片显示
+            </button>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 1rem; justify-content-between;">
+        <div>
+            <button class="btn btn-primary" id="btn-5" data-page="page5" type="button" onclick='pub("5")'>
+                5贪吃蛇
+            </button>
+            <button class="btn btn-primary" id="btn-6" data-page="page6" type="button" onclick='pub("6")'>
+                6笨鸟先飞
+            </button>
+            <button class="btn btn-primary" id="btn-7" data-page="page7" type="button" onclick='pub("7")'>
+                7二维码
+            </button>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 1rem">
+        <div>
+            <button class="btn btn-primary" type="button" onclick='pub("last")'>上一页</button>
+            <button class="btn btn-primary" type="button" onclick='pub("next")'>下一页</button>
+        </div>
+    </div>
+</div>
+<div class="container page-content" id="page1">
+
+</div>
+<div class="container page-content" id="page2" style="text-align: center">
+    <div style="margin-bottom: 1rem">
+        <textarea class="text-area" id="text-input" placeholder="请输入文字"></textarea>
+    </div>
+    <div style="margin-bottom: 1rem">
+        <button class="btn btn-primary " type="button" onclick='pub("TEXT")'>上传文字</button>
+        <button class="btn btn-primary toggle-scroll" type="button" onclick='pub("SCROLLING")'>开启文字滚动</button>
+        <button id="colorPickerTrigger" class="btn btn-primary" type="button">设置字体颜色</button>
+    </div>
+    <div style="margin-bottom: 1rem " id="colorSelect">
+        <!-- 隐藏颜色选择器 -->
+        <input type="color" class="btn btn-light" id="colorPicker">
+        <button id="colorPickerConfirm" class="btn btn-success" type="button">确定</button>
+        <button id="colorPickerCancel" class="btn btn-success" type="button">取消</button>
+    </div>
+    <br>
+    <div style="margin-bottom: 1rem;">
+        <label for="scroll-speed">设置滚动速度:</label>
+        <!-- 添加滚动速度设置 -->
+        <select id="scroll-speed" onchange='pub(this.value)'>
+            <option value="SPEED2">正常</option>
+            <option value="SPEED1">慢</option>
+            <option value="SPEED3">快</option>
+        </select>
+        <label for="font-size">设置字体大小:</label>
+        <!-- 添加字体大小设置 -->
+        <select id="font-size" onchange='pub(this.value)'>
+            <option value="FONTSIZE1">小</option>
+            <option value="FONTSIZE2">大</option>
+        </select>
+    </div>
+</div>
+<div class="container page-content" id="page3" style="text-align: center">
+    <div style="margin-bottom: 1rem">
+        <button class="btn btn-info toggle-timer" type="button" onclick='pub("TIMER")'>开始计时</button>
+        <button class="btn btn-danger timer-stop" type="button" disabled onclick='pub("TIMER_STOP")'>结束计时</button>
+        <button class="btn btn-success timer-reset" type="button" onclick='pub("TIMER_RESET")'>重置</button>
+    </div>
+</div>
+<div class="container page-content" id="page4" style="text-align: center">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <!-- 文件输入和上传按钮组合 -->
+                <div class="input-group">
+                    <input type="file" class="form-control" id="imageUpload" accept="image/*">
+                    <button class="btn btn-info" type="button" onclick="uploadImage()">上传图片</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="margin-bottom: 1rem">
+        <label id = "uploadState">图片加载中...</label>
+    </div>
+</div>
+<div class="container page-content" id="page5" style="text-align: center">
+    <div style="margin-bottom: 1rem">
+        <button class="btn btn-success" type="button" onclick='pub("SNAKE_START")'>开始游戏</button>
+        <button class="btn btn-danger" type="button" onclick='pub("SNAKE_END")'>结束游戏</button>
+    </div>
+    <div style="margin-bottom: 1rem">
+        <button class="btn btn-success" type="button" onclick='pub("UP")'>⬆</button>
+    </div>
+    <div style="margin-bottom: 1rem">
+        <button class="btn btn-success" type="button" onclick='pub("LEFT")'>⬅</button>
+        <label class="btn btn-success" style="pointer-events: none;">⚪</label>
+        <button class="btn btn-success" type="button" onclick='pub("RIGHT")'>➡</button>
+    </div>
+    <div style="margin-bottom: 1rem">
+        <button class="btn btn-success" type="button" onclick='pub("DOWN")'>⬇</button>
+    </div>
+</div>
+<div class="container page-content" id="page6" style="text-align: center">
+    <div style="margin-bottom: 1rem">
+        <button class="btn btn-info" type="button" onclick='pub("BD_START")'>开始游戏</button>
+        <button class="btn btn-success" type="button" onclick='pub("BD_END")'>结束游戏</button>
+    </div>
+    <div style="margin-bottom: 1rem">
+        <button class="btn btn-primary" type="button" onclick='pub("FLY")'>上升</button>
+    </div>
+</div>
+<div class="container page-content" id="page7" style="text-align: center">
+
+</div>
+<div class="container page-content" id="page8" style="text-align: center">
+
+</div>
+<br>
+<div class="container d-flex justify-content-center align-items-center">
+    <canvas id="screenCanvas"  style="width:128px;height:160px;border: 1px solid black;
+margin-bottom: 1rem"></canvas>
+</div>
+<div class="col d-grid">
+    <button class="btn btn-primary" type="button" onclick='pub("screen")'>手动刷新屏幕预览</button>
+</div>
+<script>
+    let move = ["UP","DOWN","LEFT","RIGHT","A","START","BD_START","BD_RESET"]
+    <!--  动态显示或隐藏对应页面内容  -->
+    document.addEventListener('DOMContentLoaded', function () {
+        var currentPage = 1;
+        var container = document.getElementById('pageSelect'); //选择存放页面切换按钮的容器
+        var buttons = container.querySelectorAll('button'); //选择该容器内所有按钮
+        var pages = document.querySelectorAll('.page-content');
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                // 移除所有页面的active类
+                pages.forEach(function (page) {
+                    page.classList.remove('active');
+                });
+
+                // 获取按钮上data-page属性的值
+                var targetPageId = this.getAttribute('data-page');
+
+                // 显示对应ID的页面内容
+                var targetPage = document.getElementById(targetPageId);
+                if (targetPage) {
+                    targetPage.classList.add('active');
+                }
+            });
+        });
+    });
+
+    // 当用户点击设置字体颜色按钮时
+    document.getElementById('colorPickerTrigger').addEventListener('click', function () {
+        // 显示颜色选择器和确定按钮
+        document.getElementById('colorSelect').style.display = 'block';
+        // document.getElementById('colorPickerConfirm').style.display = 'block';
+    });
+
+    // 当用户点击颜色确定按钮时
+    document.getElementById('colorPickerConfirm').addEventListener('click', function () {
+        // 获取颜色选择器的值
+        var colorSelect = document.getElementById('colorSelect');
+        var selectedColor = colorPicker.value;
+
+        // 发送颜色值到服务器或执行其他操作
+        pub("COLOR" + selectedColor);
+        // 隐藏颜色选择器和确定按钮
+        colorSelect.style.display = 'none';
+        // this.style.display = 'none';
+    });
+    //用户点击颜色取消按钮
+    document.getElementById('colorPickerCancel').addEventListener('click', function () {
+        var colorSelect = document.getElementById('colorSelect');
+        // 隐藏颜色选择器和确定按钮
+        colorSelect.style.display = 'none';
+        // this.style.display = 'none';
+    });
+
+    // var imageData = '';
+    // //图片选择
+    // document.getElementById('imageUpload').addEventListener('change', function(event) {
+    //     const file = event.target.files[0];
+    //     if (file) {
+    //         const reader = new FileReader();
+    //         reader.onload = function (e) {
+    //             imageData = e.target.result;
+    //         };
+    //         console.log('Image data:', imageData);
+    //         reader.readAsDataURL(file);
+    //     }
+    // });
+
+    var imei = window.location.href;
+    if (imei.indexOf("?") >= 0)
+        imei = imei.substring(imei.indexOf("?") + 1);
+    if (imei.length != 15) {
+        window.location.href =
+            "http://localhost:8080/web/remote.html?" +
+            prompt("imei不对，请手动输入imei：");
+    }
+
+    var connected = false;
+    // ws表示Websocket协议
+    var client = mqtt.connect("ws://broker.emqx.io:8083/mqtt", {
+        keepalive: 60,
+        clientId: 'Client' + Math.random(),
+        protocolId: 'MQTT',
+        protocolVersion: 4,
+        clean: true,
+        reconnectPeriod: 1000,
+        connectTimeout: 30 * 1000,
+        will: {
+            topic: 'WillMsg',
+            payload: 'Connection Closed abnormally..!',
+            qos: 0,
+            retain: false
+        },
+    });
+    client.on('connect', (r) => {
+        console.log('已连接:', r);
+        connected = true;
+        client.subscribe('magicbox/remote/' + imei + "/+");
+        client.publish("magicbox/control/" + imei, "screen");
+    });
+
+    client.on('error', (error) => {
+        console.log('连接失败:', error);
+    });
+
+    var buff = [];
+    // const toHexString = bytes =>
+    //     bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+    client.on('message', (topic, message) => {
+        console.log('收到消息：', topic, message);
+        if (topic == "magicbox/remote/" + imei + "/uploadImage"){
+            if(message == "success"){
+                document.getElementById('uploadState').textContent = "图片上传成功！"
+            }
+            else{
+                document.getElementById('uploadState').textContent = "图片上传失败！"
+            }
+        }
+        if (topic == "magicbox/remote/" + imei + "/screen") {
+            refresh(message);
+        } else if (topic.indexOf("magicbox/remote/" + imei + "/screen") == 0) {
+            if (topic == "magicbox/remote/" + imei + "/screen1")
+                buff = Array.from(message);
+            else if (topic == "magicbox/remote/" + imei + "/screen_end")
+                refresh(Uint8Array.from(buff));
+            else
+                buff = buff.concat(Array.from(message));
+
+        }
+    });
+
+    function uploadImage() {
+        var imageInput = document.getElementById('imageUpload');
+        var file = imageInput.files[0];
+
+        var reader = new FileReader();
+        reader.onload = function(event) {
+            var imageData = event.target.result;
+            console.log('Original image data:', imageData);
+
+            var img = new Image();
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                canvas.width = 128;
+                canvas.height = 128;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0,128,128);
+                var imageDataPNG = canvas.toDataURL('image/png',0.2);
+                // console.log('PNG image data:', imageDataPNG);
+                // pub("PHOTO" + imageDataPNG);
+                sendImageData(imageDataPNG);
+            };
+            img.src = imageData;
+        };
+
+        reader.readAsDataURL(file);
+    }
+    function sendImageData(imageData) {
+        var maxPacketSize = 10000;
+        // 判断图片数据是否小于等于最大包大小
+        if (imageData.length <= maxPacketSize) {
+            // 如果是，则直接发送整个图片数据
+            pub("PHOTO#" + imageData);
+        } else {
+            // 如果图片数据大于最大包大小，则分包发送
+            var totalPackets = Math.ceil(imageData.length / maxPacketSize);
+            var index = 0;
+            for (var i = 1; i <= totalPackets; i++) {
+                // 获取当前包的数据片段
+                var packetData = imageData.substring(index, index + maxPacketSize);
+                // 发送当前包，并附上包的序号
+                pub("PHOTO" + i +"#" +packetData);
+                index += maxPacketSize;
+            }
+            // 发送结束标志
+            pub("PHOTO_END#");
+        }
+    }
+    function refresh(msg) {   //刷新屏幕
+        var inflate = new Zlib.Inflate(msg);
+        var plain = inflate.decompress();
+        var screenCanvas = document.getElementById('screenCanvas');
+        var screen = screenCanvas.getContext('2d');
+        // 设置画布大小以匹配放大后的屏幕尺寸
+        screenCanvas.width = 128 * 4;
+        screenCanvas.height = 160 * 4;
+        for (var i = 0; i < 128 * 160; i++) {
+            var x = i % 128;
+            var y = Math.floor(i / 128);
+            var color = plain[i * 2] + plain[i * 2 + 1] * 256;
+            var r = (color >> (6 + 5)) << 3;
+            var g = ((color >> 5) % (1 << 6)) << 2;
+            var b = (color % (1 << 5)) << 3;
+            screen.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
+            screen.fillRect(x * 4, y * 4, 4, 4);
+        }
+    }
+
+
+    let timerRecords = 0 //统计暂停或结束总计次数，最大为五次，即5条记录
+    let isScrolling = false; // 初始状态为未滚动
+    // 全局变量，用于跟踪计时器的当前状态
+    let isTimerActive = false;
+    // 定时器ID
+    var timerId = null;
+    // 开始定时执行publishScreen函数
+    function startPublishing(interval) {
+        timerId = setInterval(function (){
+            client.publish("magicbox/control/" + imei, "screen")
+        }, interval);
+        console.log("Publishing started.");
+    }
+    // 停止定时执行
+    function stopPublishing() {
+        if (timerId) {
+            clearInterval(timerId); // 清除定时器
+            timerId = null; // 重置定时器ID
+            console.log("Publishing stopped.");
+        } else {
+            console.log("No active publishing to stop.");
+        }
+    }
+
+    function pub(s) {
+        if (connected) {
+            if (s == "TEXT") {   //如果是上传文字则字符串s变为TEXT加上上传的文字
+                var textBox = document.getElementById('text-input'); //获取文本框元素
+                var text = textBox.value;
+                s = s + text;
+            } else if (s == "SCROLLING") {
+                // 切换状态
+                isScrolling = !isScrolling;
+                // 根据状态更新页面或执行相应的逻辑
+                let button = document.querySelector('.toggle-scroll');
+                if (isScrolling) {
+                    startPublishing(500)
+                    button.textContent = '停止文字滚动';
+                } else {
+                    stopPublishing()
+                    button.textContent = '开启文字滚动';
+                }
+            } else if (s.includes("TIMER")) {  //处理秒表页面的按钮
+                const timerControlBtn = document.querySelector('.toggle-timer');
+                const timerStopBtn = document.querySelector('.timer-stop');
+
+                if (s === "TIMER") {
+                    // 切换开始/暂停计时
+                    if (!isTimerActive) {
+                        //开始计时
+                        timerControlBtn.textContent = '暂停计时';
+                        s = "TIMER_START";
+                        isTimerActive = true;
+                    } else {
+                        // 暂停计时
+                        timerControlBtn.textContent = '开始计时';
+                        timerRecords = timerRecords + 1;
+                        s = "TIMER_PAUSE"
+                        isTimerActive = false;
+                    }
+                    // 更新结束计时按钮的状态
+                    timerStopBtn.disabled = false;
+                } else if (s === "TIMER_STOP") {
+                    // 结束计时
+                    // if (isTimerRunning) {
+                    //     mqttPublish("lcd/screen/timer", "stop");
+                    // }
+                    // 更新按钮状态
+                    timerControlBtn.textContent = '开始计时';
+                    // timerControlBtn.disabled = false;
+                    timerRecords = timerRecords + 1
+                    timerStopBtn.disabled = true;
+                    isTimerActive = false;
+                    // isTimerRunning = false;
+                } else if (s === "TIMER_RESET") {
+                    timerRecords = 0
+                    // 更新按钮状态
+                    timerControlBtn.textContent = '开始计时';
+                    // timerControlBtn.disabled = false;
+                    timerStopBtn.disabled = true;
+                    isTimerActive = false;
+                    // isTimerRunning = false;
+                }
+            }
+            if (timerRecords > 5) { //最大记录五条，超出会提醒重新开始计时
+                alert("超出记录条数(最多5条)，请重置秒表重新计时!")
+                timerRecords = 5
+            }
+            client.publish("magicbox/control/" + imei, s);
+            if(s!="screen"&&!move.includes(s)){
+                client.publish("magicbox/control/" + imei, "screen")
+            }
+        }
+        console.log('发送事件', s);
+    }
+
+</script>
+</body>
+
+</html>
