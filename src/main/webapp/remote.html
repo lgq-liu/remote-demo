@@ -44,7 +44,7 @@
 <body>
 <h1 align="center">远程控制</h1>
 <div class="container" id="pageSelect" style="text-align: center">
-    <div class="row" style="margin-bottom: 1rem; justify-content-between;">
+    <div class="row" style="margin-bottom: 1rem; justify-content-between">
         <div>
             <button class="btn btn-primary " id="btn-1" data-page="page1" type="button" onclick='pub("1")'>
                 1主页
@@ -251,7 +251,7 @@ margin-bottom: 1rem"></canvas>
         imei = imei.substring(imei.indexOf("?") + 1);
     if (imei.length != 15) {
         window.location.href =
-            "http://localhost:8080/web/remote.html?" +
+            "http://lgq-liu.github.io/remote-demo/src/main/webapp/remote.html?" +
             prompt("imei不对，请手动输入imei：");
     }
 
