@@ -257,7 +257,7 @@ margin-bottom: 1rem"></canvas>
 
     var connected = false;
     // ws表示Websocket协议
-    var client = mqtt.connect("ws://broker.emqx.io:8083/mqtt", {
+    var client = mqtt.connect("wss://broker.emqx.io:8084/mqtt", {
         keepalive: 60,
         clientId: 'Client' + Math.random(),
         protocolId: 'MQTT',
